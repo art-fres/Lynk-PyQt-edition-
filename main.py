@@ -1,6 +1,9 @@
 from PyQt6 import *
 import os
 import sqlite3
+from ui.main_window import main_template
+from ui.dialog_window import dialog_template
+
 #Работа с темами приложения
 THEMES = {
     "dark": os.path.join("styles", "dark.qss"),
@@ -8,7 +11,7 @@ THEMES = {
 }
 
 
-def load_theam(name):
+def load_theme(name):
     path = THEMES.get(name)
 
     if path and os.path.exists(path):
@@ -18,8 +21,9 @@ def load_theam(name):
     return ""
 
 
-
-#Работа с базами данных 1. БД для подписок 2. БД для уведомлений
+"""Работа с базами данных"""
+#1. БД для подписок
+# 2. БД для уведомлений
 
 connection = sqlite3.connect("lynk.db")
 def init_db():
@@ -90,4 +94,9 @@ def was_notified_today(sub_id, date):
                        (sub_id, date))
         rez = cursor.fetchone()
     return rez is not None
+
+
+"""Основная логика"""
+#1. Диалоговое окно
+#2. Основное окно
 
