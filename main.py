@@ -1,6 +1,12 @@
-from PyQt6 import *
+import io
+
+from PyQt6 import uic
 import os
 import sqlite3
+
+from PyQt6.QtCore import QRegularExpression
+from PyQt6.QtGui import QRegularExpressionValidator
+from PyQt6.QtWidgets import QDialog, QMessageBox
 from ui.main_window import main_template
 from ui.dialog_window import dialog_template
 
@@ -99,4 +105,56 @@ def was_notified_today(sub_id, date):
 """Основная логика"""
 #1. Диалоговое окно
 #2. Основное окно
+
+
+class DialogWindow(QDialog):
+    def __init__(self):
+        super().__init__()
+        f = io.StringIO(dialog_template)
+        uic.loadUi(f, self)
+
+        validator = QRegularExpression(r"^\d*[.,]?\d*$") #можно вводить только int или float
+
+        self.inputCost.setValidator(QRegularExpressionValidator(validator, self))
+        self.btnSave.clicked.connect(self.save)
+        self.btnCancel.clicked.connect(self.reject)
+
+        self.load_categories()
+
+    def load_categories(self):
+        for id, name in get_categories():
+            self.comboCategory.addItem(name, id)
+
+
+    def save (self):
+        name = self.inputName.text().strip()
+        cost = self.inputCost.text().strip().replace(",", ".")
+
+
+        if not name:
+            QMessageBox.warning(self, "Ошибка", "Введите название подписки!".capitalize())
+            return
+        if not cost:
+            QMessageBox.warning(self, "Ошибка", "Введите стоимость подписки!".capitalize())
+            return
+
+
+        try:
+            cost = float(cost)
+        except ValueError:
+            QMessageBox.warning(self, "ОШИБКА",f"НЕКОРРЕКТНАЯ СТОИМОСТЬ!")
+            return
+
+        if cost <= 0:
+            QMessageBox.warning(self, "ОШИБКА", "Стоимость должна быть больше нуля!".capitalize())
+            return
+
+        date = self.inputDate.date().toString("yyyy-MM-dd")
+        id_category = self.comboCategory.currentData() #currentData = id
+
+        try:
+            add_subscription(name, date, cost, id_category)
+            self.accept()
+        except Exception as e:
+            QMessageBox.critical(self, "ОШИБКА БД", f"Подробнее: {e}")
 
