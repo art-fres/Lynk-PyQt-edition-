@@ -1,4 +1,4 @@
-main_template="""<?xml version="1.0" encoding="UTF-8"?>
+main_template = """<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
@@ -58,9 +58,6 @@ main_template="""<?xml version="1.0" encoding="UTF-8"?>
       <property name="editTriggers">
        <set>QAbstractItemView::NoEditTriggers</set>
       </property>
-      <property name="verticalHeaderVisible">
-       <bool>false</bool>
-      </property>
       <column>
        <property name="text">
         <string>Название</string>
@@ -86,13 +83,6 @@ main_template="""<?xml version="1.0" encoding="UTF-8"?>
     <item>
      <layout class="QHBoxLayout" name="bottomLayout">
       <item>
-       <spacer name="spacerLeft">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </spacer>
-      </item>
-      <item>
        <widget class="QPushButton" name="btnAdd">
         <property name="minimumSize">
          <size>
@@ -111,13 +101,6 @@ main_template="""<?xml version="1.0" encoding="UTF-8"?>
          <string>ДОБАВИТЬ</string>
         </property>
        </widget>
-      </item>
-      <item>
-       <spacer name="spacerRight">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </spacer>
       </item>
      </layout>
     </item>

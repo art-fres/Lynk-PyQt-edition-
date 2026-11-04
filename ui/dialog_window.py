@@ -38,20 +38,15 @@ dialog_template = """<?xml version="1.0" encoding="UTF-8"?>
       </font>
      </property>
      <property name="text">
-      <string>Введите название</string>
+      <string>Введите данные</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignmentFlag::AlignCenter</set>
+      <set>Qt::AlignCenter</set>
      </property>
     </widget>
    </item>
    <item>
     <widget class="QLabel" name="labelName">
-     <property name="font">
-      <font>
-       <pointsize>11</pointsize>
-      </font>
-     </property>
      <property name="text">
       <string>Название</string>
      </property>
@@ -72,13 +67,8 @@ dialog_template = """<?xml version="1.0" encoding="UTF-8"?>
    </item>
    <item>
     <widget class="QLabel" name="labelDate">
-     <property name="font">
-      <font>
-       <pointsize>11</pointsize>
-      </font>
-     </property>
      <property name="text">
-      <string>Дата</string>
+      <string>Дата окончания</string>
      </property>
     </widget>
    </item>
@@ -100,11 +90,6 @@ dialog_template = """<?xml version="1.0" encoding="UTF-8"?>
    </item>
    <item>
     <widget class="QLabel" name="labelCost">
-     <property name="font">
-      <font>
-       <pointsize>11</pointsize>
-      </font>
-     </property>
      <property name="text">
       <string>Стоимость</string>
      </property>
@@ -125,11 +110,6 @@ dialog_template = """<?xml version="1.0" encoding="UTF-8"?>
    </item>
    <item>
     <widget class="QLabel" name="labelCategory">
-     <property name="font">
-      <font>
-       <pointsize>11</pointsize>
-      </font>
-     </property>
      <property name="text">
       <string>Категория подписки</string>
      </property>
@@ -146,23 +126,23 @@ dialog_template = """<?xml version="1.0" encoding="UTF-8"?>
     </widget>
    </item>
    <item>
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Orientation::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>0</width>
-       <height>0</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item>
     <layout class="QHBoxLayout" name="buttonLayout">
      <property name="spacing">
       <number>15</number>
      </property>
+     <item>
+      <widget class="QPushButton" name="btnCancel">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>45</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>ОТМЕНА</string>
+       </property>
+      </widget>
+     </item>
      <item>
       <widget class="QPushButton" name="btnSave">
        <property name="minimumSize">
@@ -179,24 +159,10 @@ dialog_template = """<?xml version="1.0" encoding="UTF-8"?>
        </property>
       </widget>
      </item>
-     <item>
-      <widget class="QPushButton" name="btnCancel">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>45</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>ОТМЕНА</string>
-       </property>
-      </widget>
-     </item>
     </layout>
    </item>
   </layout>
  </widget>
  <resources/>
  <connections/>
-</ui>
-"""
+</ui>"""

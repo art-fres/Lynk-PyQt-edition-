@@ -1,12 +1,14 @@
-import io
-
-from PyQt6 import uic
 import os
-import sqlite3
+os.environ['QT_OPENGL'] = 'software'
 
-from PyQt6.QtCore import QRegularExpression
-from PyQt6.QtGui import QRegularExpressionValidator
-from PyQt6.QtWidgets import QDialog, QMessageBox
+import io
+import datetime as dt
+from PyQt6 import uic
+import sqlite3
+import sys
+from PyQt6.QtCore import QRegularExpression, Qt, QTimer, QDate
+from PyQt6.QtGui import QRegularExpressionValidator, QColor
+from PyQt6.QtWidgets import QDialog, QMessageBox, QMainWindow, QTableWidgetItem, QApplication
 from ui.main_window import main_template
 from ui.dialog_window import dialog_template
 
@@ -81,7 +83,7 @@ def get_all_sub():
         FROM subscriptions s
         JOIN categories c ON s.category_id = c.id
         ORDER BY s.end_date ASC""")
-
+    return cursor.fetchall()
 
 #БД для уведомлений
 
@@ -108,8 +110,8 @@ def was_notified_today(sub_id, date):
 
 
 class DialogWindow(QDialog):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         f = io.StringIO(dialog_template)
         uic.loadUi(f, self)
 
@@ -158,3 +160,64 @@ class DialogWindow(QDialog):
         except Exception as e:
             QMessageBox.critical(self, "ОШИБКА БД", f"Подробнее: {e}")
 
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        f = io.StringIO(main_template)
+        uic.loadUi(f, self)
+        self.tableWidget.verticalHeader().setVisible(False)
+        self.cur_theme = "dark"
+
+        self.btnAdd.clicked.connect(self.open_dialog)
+        self.load_data()
+        # self.notifications()
+        # self.tray()
+
+
+    def load_data (self):
+        self.tableWidget.setRowCount(0) #чтобы не было наслоения
+
+        date_today = dt.datetime.now().date()
+
+        for row, (id_, title, end_date, cost, name) in enumerate(get_all_sub()):
+            self.tableWidget.insertRow(row)
+
+            date = dt.datetime.strptime(end_date, "%Y-%m-%d").date()
+
+            """Получаем все данные для каждой записи в бд"""
+            item_title = QTableWidgetItem(title)
+            item_date = QTableWidgetItem(date.strftime("%d.%m.%Y"))
+            item_cost = QTableWidgetItem(f"{cost:.2f} руб.")
+            item_cat = QTableWidgetItem(name)
+
+            """Выравнивание"""
+            item_date.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            item_cost.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            item_cat.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+
+            if date < date_today:
+                item_title.setForeground(QColor("red"))
+                item_date.setForeground(QColor("red"))
+            elif (date - date_today).days <= 3:
+                item_title.setForeground(QColor("orange"))
+
+
+            self.tableWidget.setItem(row, 0, item_title)
+            self.tableWidget.setItem(row, 1, item_date)
+            self.tableWidget.setItem(row, 2, item_cost)
+            self.tableWidget.setItem(row, 3, item_cat)
+
+    def open_dialog(self):
+        dialog = DialogWindow(self)
+        if dialog.exec():
+            self.load_data()
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    app.setQuitOnLastWindowClosed(False)
+    init_db()
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec())
