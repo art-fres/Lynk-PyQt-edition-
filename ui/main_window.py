@@ -6,9 +6,15 @@ main_template = """<?xml version="1.0" encoding="UTF-8"?>
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>761</width>
+    <height>703</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>0</width>
+    <height>0</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Lynk - Мои подписки</string>
@@ -32,7 +38,6 @@ main_template = """<?xml version="1.0" encoding="UTF-8"?>
       <property name="font">
        <font>
         <pointsize>22</pointsize>
-        <weight>75</weight>
         <bold>true</bold>
        </font>
       </property>
@@ -40,23 +45,31 @@ main_template = """<?xml version="1.0" encoding="UTF-8"?>
        <string>Ваши подписки</string>
       </property>
       <property name="alignment">
-       <set>Qt::AlignCenter</set>
+       <set>Qt::AlignmentFlag::AlignCenter</set>
       </property>
      </widget>
     </item>
     <item>
      <widget class="QTableWidget" name="tableWidget">
-      <property name="showGrid">
+      <property name="font">
+       <font>
+        <pointsize>8</pointsize>
+       </font>
+      </property>
+      <property name="editTriggers">
+       <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+      </property>
+      <property name="dragEnabled">
        <bool>false</bool>
       </property>
       <property name="alternatingRowColors">
        <bool>false</bool>
       </property>
       <property name="selectionBehavior">
-       <enum>QAbstractItemView::SelectRows</enum>
+       <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
       </property>
-      <property name="editTriggers">
-       <set>QAbstractItemView::NoEditTriggers</set>
+      <property name="showGrid">
+       <bool>false</bool>
       </property>
       <column>
        <property name="text">
@@ -93,7 +106,6 @@ main_template = """<?xml version="1.0" encoding="UTF-8"?>
         <property name="font">
          <font>
           <pointsize>16</pointsize>
-          <weight>75</weight>
           <bold>true</bold>
          </font>
         </property>
@@ -104,9 +116,44 @@ main_template = """<?xml version="1.0" encoding="UTF-8"?>
       </item>
      </layout>
     </item>
+    <item>
+     <widget class="QPushButton" name="btnTheme">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>100</width>
+        <height>55</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>100</width>
+        <height>55</height>
+       </size>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Тема</string>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
  </widget>
  <resources/>
  <connections/>
-</ui>"""
+</ui>
+"""
