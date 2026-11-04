@@ -166,17 +166,40 @@ class MainWindow(QMainWindow):
         super().__init__()
         f = io.StringIO(main_template)
         uic.loadUi(f, self)
-        self.tableWidget.verticalHeader().setVisible(False)
-        self.cur_theme = "dark"
 
+        self.tableWidget.verticalHeader().setVisible(False)
+        self.tableWidget.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        # self.tableWidget.resizeColumnsToContents()
+
+
+        """Применение темы"""
+        self.cur_theme = "dark"
+        qss = load_theme(self.cur_theme)
+        if qss:
+            QApplication.instance().setStyleSheet(qss)
+
+
+        self.btnTheme.clicked.connect(self.change_theme)
         self.btnAdd.clicked.connect(self.open_dialog)
         self.load_data()
         # self.notifications()
         # self.tray()
 
 
+
+    def open_dialog(self):
+        dialog = DialogWindow(self)
+        if dialog.exec():
+            self.load_data()
+
+
     def load_data (self):
         self.tableWidget.setRowCount(0) #чтобы не было наслоения
+
+        header = self.tableWidget.horizontalHeader()
+        header.setSectionResizeMode(0, header.ResizeMode.ResizeToContents)
+        for i in range(1, 4):
+            header.setSectionResizeMode(i, header.ResizeMode.Stretch)
 
         date_today = dt.datetime.now().date()
 
@@ -201,6 +224,7 @@ class MainWindow(QMainWindow):
                 item_date.setForeground(QColor("red"))
             elif (date - date_today).days <= 3:
                 item_title.setForeground(QColor("orange"))
+                item_date.setForeground(QColor("orange"))
 
 
             self.tableWidget.setItem(row, 0, item_title)
@@ -208,11 +232,21 @@ class MainWindow(QMainWindow):
             self.tableWidget.setItem(row, 2, item_cost)
             self.tableWidget.setItem(row, 3, item_cat)
 
-    def open_dialog(self):
-        dialog = DialogWindow(self)
-        if dialog.exec():
-            self.load_data()
+    def change_theme(self):
+        if self.cur_theme == "dark":
+            self.cur_theme = "light"
+            qss = load_theme(self.cur_theme)
+            if qss:
+                QApplication.instance().setStyleSheet(qss)
+        else:
+            self.cur_theme = "dark"
+            qss = load_theme(self.cur_theme)
+            if qss:
+                QApplication.instance().setStyleSheet(qss)
 
+
+    def notifications(self):
+         pass
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
