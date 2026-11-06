@@ -44,7 +44,7 @@ def init_db():
 
         cursor.execute("""CREATE TABLE IF NOT EXISTS subscriptions (
                             id INTEGER PRIMARY KEY AUTOINCREMENT, 
-                            title TEXT NOT NULL, 
+                            title TEXT UNIQUE NOT NULL, 
                             end_date TEXT NOT NULL, 
                             cost REAL, 
                             category_id INTEGER NOT NULL,
@@ -85,6 +85,30 @@ def get_all_sub():
         ORDER BY s.end_date ASC""")
     return cursor.fetchall()
 
+"""Обновление данных"""
+def get_subscription_by_id(sub_id):
+    with connection as conn:
+        cursor = conn.cursor()
+        cursor.execute("""SELECT id, title, end_date, cost, category_id 
+                          FROM subscriptions WHERE id = ?""", (sub_id,))
+        return cursor.fetchone()
+
+
+def update_subscription(sub_id, title, end_date, cost, cat_id):
+    with connection as conn:
+        cursor = conn.cursor()
+        cursor.execute("""UPDATE subscriptions 
+                          SET title=?, end_date=?, cost=?, category_id=? 
+                          WHERE id=?""",
+                       (title, end_date, cost, cat_id, sub_id))
+        conn.commit()
+
+
+def delete_subscription_by_id(sub_id):
+    with connection as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM subscriptions WHERE id = ?", (sub_id,))
+        conn.commit()
 #БД для уведомлений
 
 def log_notification(sub_id, date):
@@ -110,22 +134,47 @@ def was_notified_today(sub_id, date):
 
 
 class DialogWindow(QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, new_data = None): #new_data - кортеж новых данных, если он пустой то это создание новой записи:
         super().__init__(parent)
         f = io.StringIO(dialog_template)
         uic.loadUi(f, self)
 
         validator = QRegularExpression(r"^\d*[.,]?\d*$") #можно вводить только int или float
-
         self.inputCost.setValidator(QRegularExpressionValidator(validator, self))
+
+        self.inputDate.setMinimumDate(QDate.currentDate())
         self.btnSave.clicked.connect(self.save)
         self.btnCancel.clicked.connect(self.reject)
 
         self.load_categories()
 
+        self.new_data = new_data
+
+        if self.new_data:
+            self.update_sub()
+
     def load_categories(self):
         for id, name in get_categories():
             self.comboCategory.addItem(name, id)
+
+    def update_sub(self):
+        sub_id, title, end_date, cost, cat_id = self.new_data
+        self.inputName.setText(title)
+        self.inputCost.setText(f"{cost:.2f}")
+
+
+        date = QDate.fromString(end_date, "yyyy-MM-dd")
+        if date.isValid():
+            self.inputDate.setDate(date)
+
+
+
+        index = self.comboCategory.findData(cat_id)
+        if index != -1:
+            self.comboCategory.setCurrentIndex(index)
+
+        self.setWindowTitle("Редактирование подписки")
+        self.btnSave.setText("СОХРАНИТЬ")
 
 
     def save (self):
@@ -155,11 +204,17 @@ class DialogWindow(QDialog):
         id_category = self.comboCategory.currentData() #currentData = id
 
         try:
-            add_subscription(name, date, cost, id_category)
+            if self.new_data:
+                sub_id = self.new_data[0]
+                update_subscription(sub_id, name, date, cost, id_category)
+            else:
+                add_subscription(name, date, cost, id_category)
             self.accept()
-        except Exception as e:
-            QMessageBox.critical(self, "ОШИБКА БД", f"Подробнее: {e}")
+        except sqlite3.IntegrityError:
+            QMessageBox.critical(self, "ОШИБКА БД", "Скорее всего подписка с таким именем уже существует")
 
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка БД", f"Подробнее: {e}")
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -169,7 +224,7 @@ class MainWindow(QMainWindow):
 
         self.tableWidget.verticalHeader().setVisible(False)
         self.tableWidget.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        # self.tableWidget.resizeColumnsToContents()
+        self.tableWidget.cellDoubleClicked.connect(self.on_row_double_click)
 
 
         """Применение темы"""
@@ -181,6 +236,7 @@ class MainWindow(QMainWindow):
 
         self.btnTheme.clicked.connect(self.change_theme)
         self.btnAdd.clicked.connect(self.open_dialog)
+        self.btnDelete.clicked.connect(self.delete_sub)
         self.load_data()
         # self.notifications()
         # self.tray()
@@ -214,6 +270,7 @@ class MainWindow(QMainWindow):
             item_cost = QTableWidgetItem(f"{cost:.2f} руб.")
             item_cat = QTableWidgetItem(name)
 
+            item_title.setData(Qt.ItemDataRole.UserRole, id_)
             """Выравнивание"""
             item_date.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             item_cost.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
@@ -247,6 +304,47 @@ class MainWindow(QMainWindow):
 
     def notifications(self):
          pass
+
+    def on_row_double_click(self, row, column):
+        item = self.tableWidget.item(row, 0)
+        if not item:
+            return
+
+        sub_id = item.data(Qt.ItemDataRole.UserRole)
+        if sub_id is None:
+            return
+
+
+        new_data = get_subscription_by_id(sub_id)
+        if not new_data:
+            QMessageBox.warning(self, "Ошибка", "Подписка не найдена в БД!")
+            return
+        dialog = DialogWindow(self, new_data)
+        if dialog.exec():
+            self.load_data()
+
+    def delete_sub(self):
+        current_row = self.tableWidget.currentRow()
+        if current_row == -1:
+            QMessageBox.warning(self, "Внимание", "Выберите подписку для удаления!")
+            return
+
+        item = self.tableWidget.item(current_row, 0)
+        sub_id = item.data(Qt.ItemDataRole.UserRole)
+        title = item.text()
+
+        reply = QMessageBox.question(
+            self, "Подтверждение",
+            f"Удалить подписку «{title}»?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            try:
+                delete_subscription_by_id(sub_id)
+                self.load_data()
+            except Exception as e:
+                QMessageBox.critical(self, "Ошибка БД", f"Не удалось удалить:\n{e}")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
