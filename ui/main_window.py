@@ -117,6 +117,25 @@ main_template = """<?xml version="1.0" encoding="UTF-8"?>
      </layout>
     </item>
     <item>
+     <widget class="QPushButton" name="btnDelete">
+      <property name="minimumSize">
+       <size>
+        <width>220</width>
+        <height>55</height>
+       </size>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Удалить</string>
+      </property>
+     </widget>
+    </item>
+    <item>
      <widget class="QPushButton" name="btnTheme">
       <property name="enabled">
        <bool>true</bool>
@@ -156,4 +175,5 @@ main_template = """<?xml version="1.0" encoding="UTF-8"?>
  <resources/>
  <connections/>
 </ui>
+
 """
