@@ -18,6 +18,7 @@ THEMES = {
     "light": os.path.join("styles", "light.qss")
 }
 
+NOTIFY_DAYS = 3
 
 def load_theme(name):
     path = THEMES.get(name)
@@ -127,7 +128,16 @@ def was_notified_today(sub_id, date):
         rez = cursor.fetchone()
     return rez is not None
 
+def get_ex_subs(days):
+    today = dt.date.today()
+    limit = today + dt.timedelta(days=days)
 
+    with connection as conn:
+        cursor = conn.cursor()
+        cursor.execute("""SELECT id, title, end_date, cost FROM subscriptions
+         WHERE end_date BETWEEN ? AND ?""", (today.isoformat(), limit.isoformat()))
+
+        return cursor.fetchall()
 """Основная логика"""
 #1. Диалоговое окно
 #2. Основное окно
@@ -143,6 +153,8 @@ class DialogWindow(QDialog):
         self.inputCost.setValidator(QRegularExpressionValidator(validator, self))
 
         self.inputDate.setMinimumDate(QDate.currentDate())
+        self.inputDate.setDate(QDate.currentDate().addDays(30))
+
         self.btnSave.clicked.connect(self.save)
         self.btnCancel.clicked.connect(self.reject)
 
@@ -225,8 +237,6 @@ class MainWindow(QMainWindow):
         self.tableWidget.verticalHeader().setVisible(False)
         self.tableWidget.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.tableWidget.cellDoubleClicked.connect(self.on_row_double_click)
-
-
         """Применение темы"""
         self.cur_theme = "dark"
         qss = load_theme(self.cur_theme)
@@ -238,8 +248,8 @@ class MainWindow(QMainWindow):
         self.btnAdd.clicked.connect(self.open_dialog)
         self.btnDelete.clicked.connect(self.delete_sub)
         self.load_data()
-        # self.notifications()
-        # self.tray()
+        self.notifications()
+
 
 
 
@@ -303,7 +313,29 @@ class MainWindow(QMainWindow):
 
 
     def notifications(self):
-         pass
+        today = dt.date.today().isoformat()
+        subs = []
+
+        for id_, title, end_date, cost in get_ex_subs(NOTIFY_DAYS):
+            if was_notified_today(id_, today):
+                continue
+
+            log_notification(id_, today)
+            days = (dt.date.fromisoformat(end_date) - dt.date.fromisoformat(today)).days
+
+            print(days)
+
+            if days == 0:
+                when = "сегодня"
+            elif days == 1:
+                when = "завтра"
+            else:
+                when = f"через {days} дн."
+            subs.append(f"{title} - {when} ({cost:.2f} руб.)")
+
+
+        if subs:
+            QMessageBox.information(self, "Подписки истекают", "\n".join(subs))
 
     def on_row_double_click(self, row, column):
         item = self.tableWidget.item(row, 0)
@@ -348,7 +380,7 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    app.setQuitOnLastWindowClosed(False)
+    # app.setQuitOnLastWindowClosed(False)
     init_db()
     window = MainWindow()
     window.show()
