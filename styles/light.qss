@@ -17,6 +17,11 @@ QTableWidget {
     selection-color: #1a1c23;
 }
 
+QHeaderView{
+    background: transparent;
+    border: none;
+}
+
 QHeaderView::section {
     background-color: transparent;
     border: none;
