@@ -1,4 +1,4 @@
-QMainWindow {
+LIGHT_THEME = """QMainWindow {
     background-color: #f4f6f8;
 }
 
@@ -112,4 +112,4 @@ QMenu {
 
 QMenu::item:selected {
     background-color: #d0d7de;
-}
+}"""

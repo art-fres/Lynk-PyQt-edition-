@@ -1,4 +1,4 @@
-QMainWindow {
+DARK_THEME = """QMainWindow {
     background-color: #1a1c23;
 }
 
@@ -13,7 +13,8 @@ QTableWidget {
     background-color: #1a1c23;
     border: none;
     gridline-color: transparent;
-    selection-background-color: #2b3545;
+    selection-background-color: #445f8c;
+    
     selection-color: #ffffff;
 }
 
@@ -112,4 +113,4 @@ QMenu {
 
 QMenu::item:selected {
     background-color: #556b8c;
-}
+}"""

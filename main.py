@@ -11,23 +11,20 @@ from PyQt6.QtGui import QRegularExpressionValidator, QColor
 from PyQt6.QtWidgets import QDialog, QMessageBox, QMainWindow, QTableWidgetItem, QApplication
 from ui.main_window import main_template
 from ui.dialog_window import dialog_template
+from styles.dark import DARK_THEME
+from styles.light import LIGHT_THEME
 
 #Работа с темами приложения
+
 THEMES = {
-    "dark": os.path.join("styles", "dark.qss"),
-    "light": os.path.join("styles", "light.qss")
+    "dark": DARK_THEME,
+    "light": LIGHT_THEME
 }
 
 NOTIFY_DAYS = 3
 
 def load_theme(name):
-    path = THEMES.get(name)
-
-    if path and os.path.exists(path):
-        with open(path, 'r', encoding='utf-8') as theme:
-            return theme.read()
-
-    return ""
+    return THEMES.get(name)
 
 
 """Работа с базами данных"""
@@ -105,7 +102,8 @@ def update_subscription(sub_id, title, end_date, cost, cat_id):
         conn.commit()
 
 
-def delete_subscription_by_id(sub_id):
+def \
+        delete_subscription_by_id(sub_id):
     with connection as conn:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM subscriptions WHERE id = ?", (sub_id,))
@@ -234,9 +232,17 @@ class MainWindow(QMainWindow):
         f = io.StringIO(main_template)
         uic.loadUi(f, self)
 
+        #доп настройка таблицы
         self.tableWidget.verticalHeader().setVisible(False)
-        self.tableWidget.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.tableWidget.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.tableWidget.setSelectionBehavior(
+            self.tableWidget.SelectionBehavior.SelectRows
+        )
+        self.tableWidget.setSelectionMode(
+            self.tableWidget.SelectionMode.ExtendedSelection
+        )
         self.tableWidget.cellDoubleClicked.connect(self.on_row_double_click)
+
         """Применение темы"""
         self.cur_theme = "dark"
         qss = load_theme(self.cur_theme)
@@ -356,31 +362,50 @@ class MainWindow(QMainWindow):
             self.load_data()
 
     def delete_sub(self):
-        current_row = self.tableWidget.currentRow()
-        if current_row == -1:
-            QMessageBox.warning(self, "Внимание", "Выберите подписку для удаления!")
+        selection = self.tableWidget.selectionModel()
+        rows = sorted({idx.row() for idx in selection.selectedRows()})
+
+
+        if not rows:
+            current_row = self.tableWidget.currentRow()
+            if current_row == -1:
+                QMessageBox.warning(self, "Внимание", "Выберите подписку для удаления!")
+                return
+            rows = [current_row]
+
+        subs = []
+        for row in rows:
+            item = self.tableWidget.item(row, 0)
+            if item and item.data(Qt.ItemDataRole.UserRole) is not None:
+                subs.append((item.data(Qt.ItemDataRole.UserRole), item.text()))
+
+        if not subs:
             return
 
-        item = self.tableWidget.item(current_row, 0)
-        sub_id = item.data(Qt.ItemDataRole.UserRole)
-        title = item.text()
+        if len(subs) == 1:
+            text = f"Удалить подписку «{subs[0][1]}»?"
+        else:
+            preview = "\n".join(f"• {title}" for _, title in subs[:10])
+            if len(subs) > 10:
+                preview += f"\n… и ещё {len(subs) - 10}"
+            text = f"Удалить {len(subs)} подписок?\n\n{preview}"
 
         reply = QMessageBox.question(
-            self, "Подтверждение",
-            f"Удалить подписку «{title}»?",
+            self, "Подтверждение", text,
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
 
-        if reply == QMessageBox.StandardButton.Yes:
-            try:
+        try:
+            for sub_id, _ in subs:
                 delete_subscription_by_id(sub_id)
-                self.load_data()
-            except Exception as e:
-                QMessageBox.critical(self, "Ошибка БД", f"Не удалось удалить:\n{e}")
+            self.load_data()
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка БД", f"Не удалось удалить:\n{e}")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    # app.setQuitOnLastWindowClosed(False)
     init_db()
     window = MainWindow()
     window.show()
